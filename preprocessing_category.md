@@ -9,34 +9,96 @@
 グループで分類される変数をもつデータです。グループでの分類というのが「ミソ」です。
 具体的に言うと、データサイエンティストが扱うデータは個数や人数のように数えられるものだけではありません。顧客満足度や好みのように，数えることのできないデータも存在します。それらのデータがカテゴリカルデータです。定性的データと言うとイメージがつくかもしれません。
 
+<img width="228" alt="2017-10-20 15 30 51" src="https://user-images.githubusercontent.com/25298659/31807273-2e0af86e-b5a8-11e7-9414-003c82ce034e.png">
+
+
+### カテゴリカルデータの処理
+カテゴリカルデータがどんなデータか理解したところで、具体的にどんな処理方法があるのか見ていきましょう。
+
+#### ワンホットエンコーディング
+カテゴリカルデータを処理する方法として一番よく用いられるのがこの手法です。得られた特徴量（性別や年齢）を「0と1」のデータに置き換えるものです。0と1に置き換えることで、SVMやナイーブベイズ等の線形2クラス分類の式が適用できるのでsckit-learnのほとんどのライブラリを使用することができるようになります。
+
+<img width="228" alt="2017-10-20 15 30 51" src="https://user-images.githubusercontent.com/25298659/31808914-557bd0aa-b5b0-11e7-8c43-5a01b04211fc.png">
 
 
 
-上述してきた2変数の1次関数の場合でみていきます。Eの最小値を求めるので、「これを偏微分したものが0になる」という方程式を考えればいいということはすでに勉強したと思います。
-求める直線（境界線）が<img src="https://latex.codecogs.com/gif.latex?y=ax&plus;b">の時は
-
-<img src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;E}{\partial&space;a}&space;=&space;0,&space;\frac{\partial&space;E}{\partial&space;b}&space;=&space;0">
 
 
-という二つの連立方程式をとけばいいわけです。
+具体例として以下のようなものを見ましょう。
 
-・1/2をしている場合
+```
+import pandas
 
-<img
-src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;\sum_{i=1}^{N}\frac{1}{2}&space;y_{i}-f(x_{i})}{\partial&space;a}&space;=&space;\frac{\partial&space;\sum_{i=1}^{N}\frac{1}{2}y_{i}-f(x_{i})}{\partial&space;a}&space;=&space;\sum_{i=1}^{N}&space;(y_{i}-a-bx_{i})(-1)&space;=&space;0&space;\\&space;\frac{\partial&space;\sum_{i=1}^{N}\frac{1}{2}&space;y_{i}-f(x_{i})}{\partial&space;b}&space;=&space;\frac{\partial&space;\sum_{i=1}^{N}\frac{1}{2}y_{i}-f(x_{i})}{\partial&space;b}&space;=&space;\sum_{i=1}^{N}&space;(y_{i}-a-bx_{i})(-x_{i})&space;=&space;0">
+df = pandas.DataFrame([
+        ['本田', 'L', 400, 'class1'],
+        ['香川', 'S', 450, 'class2'],
+        ['岡崎', 'M', 200, 'class1']])
+df.columns = ['name', 'size', 'salary', 'classlabel']
+df
+
+```
+
+<img width="229" alt="2017-10-20 17 49 53" src="https://user-images.githubusercontent.com/25298659/31812862-55d5452c-b5bf-11e7-9d44-df00b35fc721.png">
 
 
 
-・1/2をしていない場合
-<img
-src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;\sum_{i=1}^{N}&space;y_{i}-f(x_{i})}{\partial&space;a}&space;=&space;\frac{\partial&space;\sum_{i=1}^{N}2&space;(y_{i}-f(x_{i}))}{\partial&space;a}\\&space;=&space;\sum_{i=1}^{N}&space;2(y_{i}-a-bx_{i})(-1)&space;=&space;0&space;\\&space;\leftrightarrow&space;\sum_{i=1}^{N}&space;(y_{i}-a-bx_{i})(-1)&space;=&space;0&space;\\&space;\\&space;\frac{\partial&space;\sum_{i=1}^{N}2(y_{i}-f(x_{i}))}{\partial&space;b}&space;=&space;\frac{\partial&space;\sum_{i=1}^{N}2(y_{i}-f(x_{i}))}{\partial&space;b}&space;\\=&space;\sum_{i=1}^{N}2&space;(y_{i}-a-bx_{i})(-x_{i})&space;=&space;0&space;\\&space;\leftrightarrow&space;\sum_{i=1}^{N}&space;(y_{i}-a-bx_{i})(-x_{i})&space;=&space;0">
+#### 小課題1
+調べて構いませんので、以下のようにpandasデータフレームが出力されるようにコードを作成してみてください。
 
-と結局は1/2をしようがしまいが,最終的に同じ式を計算することには変わりません。
-これは
-<img src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;E}{\partial&space;a}">や
-<img src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;E}{\partial&space;b}">自体が大事なのではなく、
-<img src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;E}{\partial&space;a}&space;=&space;0,\frac{\partial&space;E}{\partial&space;b}=0">
-という方程式がここでは大事だからです。 これが最初の質問でもある「計算簡略化のために2乗する」ということにも繋がっています。重要なのはE自体の式ではなく、Eを最小化するaとbを求めることです。
+######ヒント:get_dummiesメソッドを用います。
 
-この微分（偏微分）した後の係数をなくすために先にその係数を1にする（今の場合は2×1/2）という作業は、関数を最適化するラグランジュの未定乗数法を用いた分野では特によく用いられている計算簡略化のためのテクニックです。
-SVM（サポートベクターマシン）やナイーブベイズや誤差逆伝搬学習法でもみられる方法ですので、これも覚えておくとそれらを理解するときにスムーズにいけると思います。
+<img width="448" alt="2017-10-20 17 49 58" src="https://user-images.githubusercontent.com/25298659/31812858-53e20476-b5bf-11e7-9a45-4c3879b7b968.png">
+
+#### 小課題1 解答
+```
+pandas.get_dummies(df[['salary', 'name', 'size']])
+
+```
+
+こうすることで、縦の列で見た時に、そのカテゴリーに含まれるものなら1それ以外は0になっています。ここで、「name_" "」や「size_" "」はダミー変数と呼ばれるものです。つまり各データポイントに対して、ダミー変数は縦の列で見た時に一つだけ、1になります。これが、「ワンホットエンコーディング」と呼ばれる理由です。
+
+
+####名義尺度
+名義尺度とは分類の順序に意味がないものです。電話番号、性別、血液型などのただのラベルです。「A型よりB型が大きい」とか、「A型はB型より点数が高い！」とか使い方はしませんよね。
+
+####順序尺度
+上述した名義尺度とは別で、分類の尺度に意味があるものです。アンケートで「1:良い、2:普通、3:悪い」というのは、順序に意味があるわけです。2よりも1の方が優れているわけです。そしてこういったものは定量的に扱うこともできません。
+
+「あの店の料理は、この店の料理の3倍美味しい」とは言いませんよね。なのでこの順序尺度もカテゴリカルデータに入ります。
+
+
+試しに、順序尺度と名義尺度をエンコーディングしていきましょう。
+
+#### 小課題2
+以下のようにpandasデータフレームが出力されるように、実装して見てください。
+
+##### ヒント：mapメソッドを用います。
+
+<img width="236" alt="2017-10-21 14 28 16" src="https://user-images.githubusercontent.com/25298659/31848390-cf189c2e-b66c-11e7-8a32-1d91c02aede3.png">
+
+####小課題2 解答
+
+```
+size_mapping = {'L': 1, 'S': 2, 'M': 3}
+df['size'] = df['size'].map(size_mapping)
+df
+
+```
+
+#### 小課題3
+次に名義尺度をエンコーディングしましょう。
+以下のようにpandasデータフレームが出力されるように、実装して見てください。
+
+##### ヒント：enumerate関数を使うと良い感じにできます。（mapメソッドも用います。）
+
+<img width="231" alt="2017-10-21 14 28 26" src="https://user-images.githubusercontent.com/25298659/31848364-312a8130-b66c-11e7-89e8-2bd73df2a854.png">
+
+
+####小課題3 解答
+
+```
+class_mapping = {l:i for i, l in enumerate(numpy.unique(df['classlabel']))}
+class_mapping
+df['classlabel'] = df['classlabel'].map(class_mapping)
+df
+```
